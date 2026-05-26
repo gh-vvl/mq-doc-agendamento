@@ -1,6 +1,6 @@
 # Cadastro de Profissionais de Saúde
 
-Documentação funcional da feature de cadastro de profissionais no sistema de agendamento próprio. Define campos, regras de negócio, planos de trabalho, exceções, regras de conflito e requisitos de auditoria.
+Documentação da feature de cadastro de profissionais de saúde no sistema de agendamento. Define campos, regras de negócio, planos de trabalho, exceções, regras de conflito e requisitos de auditoria.
 
 ---
 
@@ -24,12 +24,12 @@ Documentação funcional da feature de cadastro de profissionais no sistema de a
 | Campo | Tipo | Obrigatório | Observação |
 |---|---|---|---|
 | Nome | string | **Sim** | Único campo de identificação obrigatório no cadastro inicial. |
-| Foto | string (URL) | Não | **Não há upload.** Recebe a URL da foto já hospedada (mesma imagem usada no aplicativo, obtida via admin para garantir match exato com a UX de agendamento). Exibir preview com recorte na interface. |
+| Foto | string (URL) | Não | **Não é essencial upload.** Pode receber a URL da foto já hospedada (mesma imagem usada no aplicativo, obtida via admin para garantir match exato com a UX de agendamento). Exibir preview com recorte na interface. |
 | E-mail | string | Não | Validação de formato quando preenchido. |
-| Telefone | string | Não | Formato BR. |
-| Liberado para agendamento | boolean | **Sim** | Controla se o profissional aparece na grade de agendamento. Default sugerido: `false`. |
-| Login | string | Não | Necessário apenas se o profissional for acessar o sistema. |
-| Senha | string (hash) | Não | Armazenada com hash. Política de senha a definir. |
+| Telefone | string | Não | +55 fixo. |
+| Liberado para agendamento | boolean | **Sim** | Controla se o profissional aparece na grade de agendamento. Default: `false`. |
+| Login | string | Não | Todos profissionais precisam acessar o sistema. |
+| Senha | string (hash) | Não | Mínimo de uma letra maiúscula, minúscula e número. |
 
 > **Regra:** no cadastro inicial, apenas **Nome** e **Liberado para agendamento** são obrigatórios. Todos os demais campos — inclusive plano de trabalho — podem ficar em branco e serem preenchidos posteriormente.
 
@@ -198,7 +198,7 @@ Se houver agendamentos confirmados no horário que será removido por uma exceç
 - Criação, edição e exclusão de exceções (incluindo desmarcação de datas individuais).
 - Criação, edição, cancelamento e remarcação de agendamentos — independente de quem executa (paciente, profissional, suporte, admin).
 
-### 7.2 Campos Mínimos do Log
+### 7.2 Campos sugeridos do Log
 
 - `usuario_id` e papel (paciente, profissional, suporte, admin).
 - `timestamp` (data e hora com timezone).
@@ -206,76 +206,3 @@ Se houver agendamentos confirmados no horário que será removido por uma exceç
 - `entidade` afetada (profissional, agendamento, exceção, etc.) e seu identificador.
 - `valores_antes` e `valores_depois` (snapshot, para auditoria de alterações).
 - `origem` (web, app, API, painel interno) — útil para investigação de incidentes.
-
-### 7.3 Padrão Existente
-Manter consistência com o formato de log já em uso na plataforma MediQuo. Esta seção descreve apenas o conteúdo mínimo esperado; o schema de persistência segue o padrão da plataforma.
-
----
-
-## 8. Sugestão de Modelo de Dados
-
-Esboço inicial, sujeito a revisão pelo time de tecnologia.
-
-```
-Profissional
-├── id
-├── nome (obrigatório)
-├── foto_url
-├── foto_crop_params (json)
-├── email
-├── telefone
-├── liberado_para_agendamento (boolean, obrigatório)
-├── login
-├── senha_hash
-├── criado_em
-└── atualizado_em
-
-PlanoTrabalho
-├── id
-├── profissional_id (FK)
-├── dia_semana (0=domingo ... 6=sábado)
-├── ativo (boolean)
-└── [relação 1:N com FaixaHorario]
-
-FaixaHorario
-├── id
-├── plano_trabalho_id (FK) — quando pertence ao plano base
-├── excecao_id (FK, nullable) — quando pertence a uma exceção
-├── dia_semana (nullable, usado em exceções com toggle desligado)
-├── hora_inicio
-└── hora_fim
-
-Excecao
-├── id
-├── profissional_id (FK)
-├── tipo (enum: adicionar, substituir, bloquear)
-├── modo_datas (enum: data_unica, multiplas_datas, periodo_com_filtro)
-├── usar_mesmos_horarios (boolean)
-├── descricao (opcional, ex.: "férias", "congresso")
-├── criado_em
-└── atualizado_em
-
-ExcecaoData
-├── id
-├── excecao_id (FK)
-├── data
-└── ativa (boolean — permite desmarcar datas sem excluir o registro histórico)
-
-LogAcao
-├── id
-├── usuario_id
-├── papel
-├── timestamp
-├── acao
-├── entidade
-├── entidade_id
-├── valores_antes (json)
-├── valores_depois (json)
-└── origem
-```
-
----
-
-## Status
-
-📝 Documentação funcional — pronta para revisão técnica e definição de arquitetura.
